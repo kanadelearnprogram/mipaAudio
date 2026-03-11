@@ -31,5 +31,13 @@ public interface AudioService extends IService<Audio> {
      * @return CompletableFuture 包含上传结果
      */
     CompletableFuture<Map<String, Object>> uploadAudioAsync(MultipartFile file, String uploadUser, String category);
+
+    /**
+     * 分页查询音频文件列表
+     * @param pageNum 页码
+     * @param pageSize 每页大小
+     * @return 分页结果，包含列表、总数、总页数等信息
+     */
+    Map<String, Object> getAudioListWithPagination(Integer pageNum, Integer pageSize);
 }
 

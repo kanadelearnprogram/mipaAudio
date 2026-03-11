@@ -1,10 +1,14 @@
 package com.kanade.mipaaudio.service.impl;
 
+import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import com.kanade.mipaaudio.entity.Audio;
 import com.kanade.mipaaudio.mapper.AudioMapper;
 import com.kanade.mipaaudio.service.AudioService;
+import com.mybatisflex.core.query.QueryWrapper;
+
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,6 +25,9 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 @Service
 public class AudioServiceImpl extends ServiceImpl<AudioMapper, Audio> implements AudioService {
+
+    @Autowired
+    private AudioMapper audioMapper;
 
     private static final String UPLOAD_DIR = "E:/codelab/mipaAudio/files/";
 
@@ -141,5 +148,49 @@ public class AudioServiceImpl extends ServiceImpl<AudioMapper, Audio> implements
 
     private String calculateMD5(MultipartFile file) throws IOException {
         return cn.hutool.crypto.digest.DigestUtil.md5Hex(file.getInputStream());
+    }
+
+    /**
+     * 分页查询音频文件列表
+     * @param pageNum 页码
+     * @param pageSize 每页大小
+     * @return 分页结果
+     */
+    @Override
+    public Map<String, Object> getAudioListWithPagination(Integer pageNum, Integer pageSize) {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // 创建分页对象
+            Page page = new Page(pageNum, pageSize);
+            
+            // 构建查询条件（只查询未删除的）
+            QueryWrapper query = new QueryWrapper();
+            query.eq("isDelete", 0);
+            // 按上传时间倒序排序
+            query.orderBy("uploadTime", false);
+            
+            // 使用 Mapper 进行分页查询
+            Page pageResult = audioMapper.paginate(page, query);
+            
+            // 封装返回结果
+            result.put("data", pageResult.getRecords());
+            result.put("total", pageResult.getTotalRow());
+            result.put("pageNum", pageNum);
+            result.put("pageSize", pageSize);
+            result.put("totalPages", pageResult.getTotalPage());
+            result.put("hasNext", pageNum < pageResult.getTotalPage());
+            result.put("hasPrevious", pageNum > 1);
+            
+            log.info("分页查询成功，页码：{}，总数：{}，总页数：{}", 
+                    pageNum, pageResult.getTotalRow(), pageResult.getTotalPage());
+            
+        } catch (Exception e) {
+            log.error("分页查询失败", e);
+            result.put("success", false);
+            result.put("message", "分页查询失败：" + e.getMessage());
+        }
+        
+        return result;
     }
 }

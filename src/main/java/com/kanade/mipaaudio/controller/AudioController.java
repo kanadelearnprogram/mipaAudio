@@ -76,19 +76,22 @@ public class AudioController {
     }
 
     /**
-     * 获取音频文件列表
-     * @return 文件列表
+     * 获取音频文件列表（支持分页）
+     * @param pageNum 页码，默认第 1 页
+     * @param pageSize 每页大小，默认 10 条
+     * @return 文件列表和分页信息
      */
     @GetMapping("/list")
-    public ResponseEntity<Map<String, Object>> getAudioList() {
-        log.info("获取音频文件列表");
+    public ResponseEntity<Map<String, Object>> getAudioList(
+            @RequestParam(value = "pageNum", defaultValue = "1") Integer pageNum,
+            @RequestParam(value = "pageSize", defaultValue = "10") Integer pageSize) {
+        log.info("获取音频文件列表，页码：{}，每页大小：{}", pageNum, pageSize);
         
         Map<String, Object> result = new HashMap<>();
         try {
-            List<Audio> audioList = audioService.list();
+            Map<String, Object> pageResult = audioService.getAudioListWithPagination(pageNum, pageSize);
             result.put("success", true);
-            result.put("data", audioList);
-            result.put("count", audioList.size());
+            result.putAll(pageResult);
         } catch (Exception e) {
             log.error("获取文件列表失败", e);
             result.put("success", false);

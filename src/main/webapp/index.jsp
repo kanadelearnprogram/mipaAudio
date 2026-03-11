@@ -30,6 +30,38 @@
             width: 100%;
         }
 
+        /* 导航栏 */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .navbar h1 {
+            margin: 0;
+        }
+
+        .btn-list {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-list:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
         /* 标题 */
         h1 {
             color: #333;
@@ -214,6 +246,10 @@
 </head>
 <body>
 <div class="container">
+    <div class="navbar">
+        <h1>🎵 米帕音频</h1>
+        <a href="${pageContext.request.contextPath}/audio-list.jsp" class="btn-list">📋 文件列表</a>
+    </div>
     <h1>🎵 音频文件上传</h1>
     
     <form id="uploadForm" action="<%= request.getContextPath() %>/api/audio/upload" method="post" enctype="multipart/form-data">
@@ -258,10 +294,9 @@
 </div>
 
 <script>
-    // 获取项目上下文路径 - 修复版本
-    const contextPath = window.location.pathname === '/' ? '' : window.location.pathname.substring(0, window.location.pathname.indexOf('/', 2));
-    
-    console.log('计算的 ContextPath:', contextPath);
+    // 获取项目上下文路径 - 使用 JSP EL 表达式（更可靠）
+    const contextPath = '${pageContext.request.contextPath}';
+    console.log('ContextPath:', contextPath);
     
     // 显示选中的文件名
     document.getElementById('file').addEventListener('change', function(e) {
