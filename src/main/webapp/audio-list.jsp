@@ -227,6 +227,120 @@
         .btn-download:active {
             transform: translateY(0);
         }
+
+        .btn-play {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-play:hover {
+            background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+        }
+
+        .btn-play:active {
+            transform: translateY(0);
+        }
+
+        /* 音频播放器弹窗 */
+        .player-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .player-content {
+            background: white;
+            margin: 10% auto;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            animation: slideDown 0.3s;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .player-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .player-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .close-player {
+            font-size: 32px;
+            font-weight: bold;
+            color: #999;
+            cursor: pointer;
+            transition: color 0.2s;
+            line-height: 1;
+        }
+
+        .close-player:hover {
+            color: #333;
+        }
+
+        .player-info {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .player-info p {
+            margin: 8px 0;
+            color: #555;
+        }
+
+        .audio-player-wrapper {
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        audio {
+            width: 100%;
+            height: 50px;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
@@ -238,7 +352,13 @@
             <a href="${pageContext.request.contextPath}/index.jsp" class="btn-back">⬆ 上传音频</a>
             <a href="${pageContext.request.contextPath}/" class="btn-back">🏠 首页</a>
         </div>
-        <button class="refresh-btn" onclick="loadAudioList(1)">🔄 刷新列表</button>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <!-- 分类筛选下拉框 -->
+            <select id="categoryFilter" onchange="loadAudioList(1)" style="padding: 8px 12px; border-radius: 5px; border: 2px solid #667eea; font-size: 14px; cursor: pointer;">
+                <option value="">全部分类</option>
+            </select>
+            <button class="refresh-btn" onclick="loadAudioList(1)">🔄 刷新列表</button>
+        </div>
     </div>
 
     <div class="table-container">
@@ -280,6 +400,27 @@
         <button onclick="changePage(currentPage + 1)" id="btnNext">下一页 →</button>
         <button onclick="changePage(totalPages)" id="btnLast">末页 ⏭</button>
     </div>
+
+    <!-- 音频播放器弹窗 -->
+    <div id="playerModal" class="player-modal">
+        <div class="player-content">
+            <div class="player-header">
+                <div class="player-title">🎵 在线播放</div>
+                <span class="close-player" onclick="closePlayer()">&times;</span>
+            </div>
+            <div class="player-info">
+                <p><strong>文件名：</strong><span id="playerFileName"></span></p>
+                <p><strong>上传人：</strong><span id="playerUploadUser"></span></p>
+                <p><strong>文件大小：</strong><span id="playerFileSize"></span></p>
+            </div>
+            <div class="audio-player-wrapper">
+                <audio id="audioPlayer" controls autoplay>
+                    <source src="" type="audio/mpeg">
+                    您的浏览器不支持音频播放。
+                </audio>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -292,11 +433,48 @@
     let totalPages = 1;
     let totalRecords = 0;
     let pageSize = 10;
+    let currentCategory = ''; // 当前选中的分类
     
-    // 页面加载时获取音频列表
+    // 页面加载时获取音频列表和分类列表
     document.addEventListener('DOMContentLoaded', function() {
-        loadAudioList(1);
+        loadCategories(); // 先加载分类列表
+        loadAudioList(1); // 再加载音频列表
     });
+    
+    // 加载分类列表
+    async function loadCategories() {
+        try {
+            const url = contextPath + '/api/audio/categories';
+            console.log('加载分类列表:', url);
+            
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP 错误：${response.status}`);
+            }
+            
+            const result = await response.json();
+            console.log('分类数据:', result);
+            
+            if (result.success && result.data) {
+                const categoryFilter = document.getElementById('categoryFilter');
+                
+                // 清空现有选项（保留“全部分类”）
+                categoryFilter.innerHTML = '<option value="">全部分类</option>';
+                
+                // 添加分类选项
+                result.data.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category;
+                    option.textContent = category;
+                    categoryFilter.appendChild(option);
+                });
+                
+                console.log('分类列表加载完成，共' + result.data.length + '个分类');
+            }
+        } catch (error) {
+            console.error('加载分类列表失败:', error);
+        }
+    }
     
     // 下载音频文件
     function downloadAudio(id) {
@@ -316,6 +494,77 @@
             document.body.removeChild(iframe);
         }, 5000);
     }
+    
+    // 在线播放音频文件
+    function playAudio(id) {
+        console.log('播放音频，ID:', id);
+        
+        // 获取音频信息（从已加载的数据中查找）
+        const audioData = findAudioById(id);
+        
+        if (!audioData) {
+            console.error('未找到音频数据，ID:', id);
+            alert('未找到音频信息');
+            return;
+        }
+        
+        // 设置播放器信息
+        const playerModal = document.getElementById('playerModal');
+        const playerFileName = document.getElementById('playerFileName');
+        const playerUploadUser = document.getElementById('playerUploadUser');
+        const playerFileSize = document.getElementById('playerFileSize');
+        const audioPlayer = document.getElementById('audioPlayer');
+        
+        playerFileName.textContent = audioData.audioName || '未知';
+        playerUploadUser.textContent = audioData.uploadUser || '匿名';
+        playerFileSize.textContent = formatFileSize(audioData.fileSize || 0);
+        
+        // 设置音频源
+        const playUrl = contextPath + '/api/audio/play?id=' + id;
+        console.log('播放 URL:', playUrl);
+        
+        audioPlayer.src = playUrl;
+        audioPlayer.load();
+        
+        // 显示播放器弹窗
+        playerModal.style.display = 'block';
+        
+        // 自动播放（浏览器可能阻止）
+        audioPlayer.play().catch(error => {
+            console.warn('自动播放被阻止，需要用户手动点击播放:', error);
+        });
+    }
+    
+    // 关闭播放器
+    function closePlayer() {
+        const playerModal = document.getElementById('playerModal');
+        const audioPlayer = document.getElementById('audioPlayer');
+        
+        // 暂停播放
+        audioPlayer.pause();
+        audioPlayer.src = '';
+        audioPlayer.load();
+        
+        // 隐藏弹窗
+        playerModal.style.display = 'none';
+    }
+    
+    // 根据 ID 查找音频数据
+    function findAudioById(id) {
+        // 从当前页面缓存的数据中查找（需要在 renderTable 时保存数据）
+        if (window.currentAudioData && window.currentAudioData.length > 0) {
+            return window.currentAudioData.find(audio => audio.id === id);
+        }
+        return null;
+    }
+    
+    // 点击弹窗外部关闭播放器
+    window.onclick = function(event) {
+        const playerModal = document.getElementById('playerModal');
+        if (event.target === playerModal) {
+            closePlayer();
+        }
+    };
     
     // 加载音频文件列表
     async function loadAudioList(page = 1) {
@@ -338,7 +587,15 @@
         paginationDiv.style.display = 'none';
         
         try {
-            const url = contextPath + '/api/audio/list?pageNum=' + page + '&pageSize=' + pageSize;
+            // 根据是否有分类筛选条件，选择不同的 API
+            let url;
+            if (currentCategory && currentCategory.trim() !== '') {
+                // 按分类查询
+                url = contextPath + '/api/audio/list/by-category?category=' + encodeURIComponent(currentCategory) + '&pageNum=' + page + '&pageSize=' + pageSize;
+            } else {
+                // 查询全部
+                url = contextPath + '/api/audio/list?pageNum=' + page + '&pageSize=' + pageSize;
+            }
             console.log('请求 API:', url);
             
             const response = await fetch(url);
@@ -360,6 +617,9 @@
                 pageSize = parseInt(result.pageSize) || 10;
                 
                 console.log('分页信息 - 当前页:', currentPage, '总页数:', totalPages, '总记录数:', totalRecords);
+                
+                // 保存当前数据，方便播放时查找
+                window.currentAudioData = result.data;
                 
                 renderTable(result.data);
                 renderPagination();
@@ -433,13 +693,27 @@
             timeCell.textContent = formatDateTime(audio.uploadTime);
             row.appendChild(timeCell);
             
-            // 操作列（下载按钮）
+            // 操作列（播放和下载按钮）
             const actionCell = document.createElement('td');
+            const buttonContainer = document.createElement('div');
+            buttonContainer.style.display = 'flex';
+            buttonContainer.style.gap = '8px';
+            
+            // 播放按钮
+            const playBtn = document.createElement('button');
+            playBtn.className = 'btn-play';
+            playBtn.textContent = '▶ 播放';
+            playBtn.onclick = function() { playAudio(audio.id); };
+            
+            // 下载按钮
             const downloadBtn = document.createElement('button');
             downloadBtn.className = 'btn-download';
             downloadBtn.textContent = '📥 下载';
             downloadBtn.onclick = function() { downloadAudio(audio.id); };
-            actionCell.appendChild(downloadBtn);
+            
+            buttonContainer.appendChild(playBtn);
+            buttonContainer.appendChild(downloadBtn);
+            actionCell.appendChild(buttonContainer);
             row.appendChild(actionCell);
             
             tableBody.appendChild(row);
@@ -482,6 +756,14 @@
         
         loadAudioList(pageNum);
     }
+    
+    // 分类筛选事件处理
+    document.getElementById('categoryFilter').addEventListener('change', function(e) {
+        currentCategory = e.target.value;
+        console.log('分类筛选:', currentCategory ? currentCategory : '全部');
+        // 切换分类时重置到第一页
+        loadAudioList(1);
+    });
     
     // 格式化文件大小
     function formatFileSize(bytes) {

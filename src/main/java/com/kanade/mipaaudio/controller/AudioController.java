@@ -167,8 +167,147 @@ public class AudioController {
         }
     }
 
-    // todo 增查
+    /**
+     * 在线播放音频文件
+     * @param id 音频 ID
+     * @param response HTTP 响应对象
+     */
+    @GetMapping("/play")
+    public void playAudio(@RequestParam("id") Long id, jakarta.servlet.http.HttpServletResponse response) {
+        log.info("在线播放音频文件，ID: {}", id);
+        
+        try {
+            // 调用 service 层获取文件信息（不更新下载次数）
+            Map<String, Object> result = audioService.downloadAudio(id);
+            
+            if (!Boolean.TRUE.equals((Boolean) result.get("success"))) {
+                log.error("播放失败：{}", result.get("message"));
+                response.sendError(400, result.get("message").toString());
+                return;
+            }
+            
+            String filePath = (String) result.get("filePath");
+            String fileName = (String) result.get("fileName");
+            
+            File file = new File(filePath);
+            if (!file.exists()) {
+                log.error("文件不存在：{}", filePath);
+                response.sendError(404, "文件不存在");
+                return;
+            }
+            
+            // 根据文件扩展名判断 MIME 类型
+            String mimeType = getAudioMimeType(fileName);
+            response.setContentType(mimeType);
+            response.setHeader("Content-Length", String.valueOf(file.length()));
+            
+            // 使用 inline 让浏览器直接播放而不是下载
+            String encodedFileName = java.net.URLEncoder.encode(fileName, "UTF-8").replaceAll("\\+", "%20");
+            response.setHeader("Content-Disposition", "inline; filename*=UTF-8''" + encodedFileName);
+            response.setHeader("Accept-Ranges", "bytes");
+            
+            // 写入文件流到响应输出流
+            try (FileInputStream inputStream = new FileInputStream(file);
+                 OutputStream outputStream = response.getOutputStream()) {
+                
+                byte[] buffer = new byte[4096];
+                int bytesRead;
+                
+                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, bytesRead);
+                }
+                
+                outputStream.flush();
+                log.info("音频播放成功：{}", fileName);
+            }
+            
+        } catch (Exception e) {
+            log.error("播放音频失败", e);
+            try {
+                response.sendError(500, "播放失败：" + e.getMessage());
+            } catch (IOException ex) {
+                log.error("发送错误响应失败", ex);
+            }
+        }
+    }
 
-    // todo 分类查询
+    /**
+     * 按分类查询音频文件列表（支持分页）
+     * @param category 分类名称
+     * @param pageNum 页码，默认第 1 页
+     * @param pageSize 每页大小，默认 10 条
+     * @return 文件列表和分页信息
+     */
+    @GetMapping("/list/by-category")
+    public ResponseEntity<Map<String, Object>> getAudioListByCategory(
+            @RequestParam("category") String category,
+            @RequestParam(value = "pageNum", defaultValue = "1") Integer pageNum,
+            @RequestParam(value = "pageSize", defaultValue = "10") Integer pageSize) {
+        log.info("按分类查询音频文件列表，分类：{}，页码：{}，每页大小：{}", category, pageNum, pageSize);
+        
+        Map<String, Object> result = new HashMap<>();
+        try {
+            Map<String, Object> pageResult = audioService.getAudioListByCategory(category, pageNum, pageSize);
+            result.put("success", true);
+            result.putAll(pageResult);
+        } catch (Exception e) {
+            log.error("按分类查询失败", e);
+            result.put("success", false);
+            result.put("message", "按分类查询失败：" + e.getMessage());
+        }
+        
+        return ResponseEntity.ok(result);
+    }
 
+    /**
+     * 获取所有分类列表
+     * @return 分类列表
+     */
+    @GetMapping("/categories")
+    public ResponseEntity<Map<String, Object>> getAllCategories() {
+        log.info("获取所有分类列表");
+        
+        Map<String, Object> result = new HashMap<>();
+        try {
+            Map<String, Object> categoriesResult = audioService.getAllCategories();
+            result.put("success", true);
+            result.putAll(categoriesResult);
+        } catch (Exception e) {
+            log.error("获取分类列表失败", e);
+            result.put("success", false);
+            result.put("message", "获取分类列表失败：" + e.getMessage());
+        }
+        
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * 根据文件扩展名获取音频 MIME 类型
+     * @param fileName 文件名
+     * @return MIME 类型
+     */
+    private String getAudioMimeType(String fileName) {
+        if (fileName == null) {
+            return "application/octet-stream";
+        }
+        
+        String lowerCase = fileName.toLowerCase();
+        if (lowerCase.endsWith(".mp3")) {
+            return "audio/mpeg";
+        } else if (lowerCase.endsWith(".wav")) {
+            return "audio/wav";
+        } else if (lowerCase.endsWith(".ogg")) {
+            return "audio/ogg";
+        } else if (lowerCase.endsWith(".aac")) {
+            return "audio/aac";
+        } else if (lowerCase.endsWith(".flac")) {
+            return "audio/flac";
+        } else if (lowerCase.endsWith(".m4a")) {
+            return "audio/mp4";
+        } else if (lowerCase.endsWith(".webm")) {
+            return "audio/webm";
+        } else {
+            return "audio/mpeg"; // 默认返回 MP3 类型
+        }
+    }
 }

@@ -222,32 +222,108 @@ public class AudioServiceImpl extends ServiceImpl<AudioMapper, Audio> implements
                 return result;
             }
             
-            // 3. 更新下载次数
-            Integer currentDownloadCount = audio.getDownloadCount();
-            if (currentDownloadCount == null) {
-                currentDownloadCount = 0;
-            }
-            audio.setDownloadCount(currentDownloadCount + 1);
-            boolean updated = updateById(audio);
-            
-            if (!updated) {
-                log.warn("更新下载次数失败，ID: {}", id);
-            } else {
-                log.info("下载次数 +1，当前下载次数：{}", audio.getDownloadCount());
-            }
-            
-            // 4. 返回下载信息
+            // 3. 返回下载信息（下载次数由 AOP 切面更新）
             result.put("success", true);
             result.put("message", "准备下载");
             result.put("data", audio);
             result.put("filePath", audio.getSavePath());
             result.put("fileName", audio.getAudioName());
             result.put("fileSize", audio.getFileSize());
+            result.put("downloadCount", audio.getDownloadCount() != null ? audio.getDownloadCount() : 0);
+            
+            log.info("下载信息准备完成，音频 ID: {}, 文件名：{}", id, audio.getAudioName());
             
         } catch (Exception e) {
             log.error("下载音频失败", e);
             result.put("success", false);
             result.put("message", "下载失败：" + e.getMessage());
+        }
+        
+        return result;
+    }
+
+    /**
+     * 按分类分页查询音频文件列表
+     * @param category 分类名称
+     * @param pageNum 页码
+     * @param pageSize 每页大小
+     * @return 分页结果
+     */
+    @Override
+    public Map<String, Object> getAudioListByCategory(String category, Integer pageNum, Integer pageSize) {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // 创建分页对象
+            Page page = new Page(pageNum, pageSize);
+            
+            // 构建查询条件（只查询未删除的且分类匹配的）
+            QueryWrapper query = new QueryWrapper();
+            query.eq("isDelete", 0);
+            query.eq("category", category);
+            // 按上传时间倒序排序
+            query.orderBy("uploadTime", false);
+            
+            // 使用 Mapper 进行分页查询
+            Page pageResult = audioMapper.paginate(page, query);
+            
+            // 封装返回结果
+            result.put("data", pageResult.getRecords());
+            result.put("total", pageResult.getTotalRow());
+            result.put("pageNum", pageNum);
+            result.put("pageSize", pageSize);
+            result.put("totalPages", pageResult.getTotalPage());
+            result.put("hasNext", pageNum < pageResult.getTotalPage());
+            result.put("hasPrevious", pageNum > 1);
+            result.put("success", true);
+            
+            log.info("按分类查询成功，分类：{}，页码：{}，总数：{}，总页数：{}", 
+                    category, pageNum, pageResult.getTotalRow(), pageResult.getTotalPage());
+            
+        } catch (Exception e) {
+            log.error("按分类查询失败，分类：{}", category, e);
+            result.put("success", false);
+            result.put("message", "按分类查询失败：" + e.getMessage());
+        }
+        
+        return result;
+    }
+
+    /**
+     * 获取所有分类（去重）
+     * @return 分类列表
+     */
+    @Override
+    public Map<String, Object> getAllCategories() {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // 构建查询条件（只查询未删除的）
+            QueryWrapper query = new QueryWrapper();
+            query.eq("isDelete", 0);
+            // 使用 select 方法指定查询 category 字段
+            query.select("DISTINCT category");
+            
+            List<Audio> audioList = list(query);
+            
+            // 提取分类名称列表
+            List<String> categories = audioList.stream()
+                    .map(Audio::getCategory)
+                    .filter(cat -> cat != null && !cat.trim().isEmpty())
+                    .distinct()
+                    .sorted()
+                    .toList();
+            
+            result.put("success", true);
+            result.put("data", categories);
+            result.put("count", categories.size());
+            
+            log.info("获取所有分类成功，分类数量：{}", categories.size());
+            
+        } catch (Exception e) {
+            log.error("获取所有分类失败", e);
+            result.put("success", false);
+            result.put("message", "获取分类失败：" + e.getMessage());
         }
         
         return result;

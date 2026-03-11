@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import java.util.concurrent.Executor;
 
 @Configuration
-@ComponentScan(basePackages = {"com.kanade.mipaaudio.controller", "com.kanade.mipaaudio.service", "com.kanade.mipaaudio.mapper", "com.kanade.mipaaudio.config"})
+@ComponentScan(basePackages = {"com.kanade.mipaaudio.controller", "com.kanade.mipaaudio.service", "com.kanade.mipaaudio.mapper", "com.kanade.mipaaudio.config", "com.kanade.mipaaudio.aspect"})
 @Import({MyBatisFlexConfig.class, WebConfig.class})
 @EnableAspectJAutoProxy(proxyTargetClass = true)
 @EnableTransactionManagement

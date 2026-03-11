@@ -46,5 +46,20 @@ public interface AudioService extends IService<Audio> {
      * @return 下载结果，包含文件路径、文件名等信息
      */
     Map<String, Object> downloadAudio(Long id);
+
+    /**
+     * 按分类分页查询音频文件列表
+     * @param category 分类名称
+     * @param pageNum 页码
+     * @param pageSize 每页大小
+     * @return 分页结果，包含列表、总数、总页数等信息
+     */
+    Map<String, Object> getAudioListByCategory(String category, Integer pageNum, Integer pageSize);
+
+    /**
+     * 获取所有分类（去重）
+     * @return 分类列表
+     */
+    Map<String, Object> getAllCategories();
 }
 
