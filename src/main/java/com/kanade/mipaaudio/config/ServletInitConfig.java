@@ -13,7 +13,7 @@ public class ServletInitConfig extends AbstractAnnotationConfigDispatcherServlet
 
     // 初始化时配置过滤器
     @Override
-    public void onStartup(ServletContext servletContext) {
+    public void onStartup(ServletContext servletContext) throws ServletException {
         try {
             // 注册字符编码过滤器
             CharacterEncodingFilter characterEncodingFilter = new CharacterEncodingFilter();
@@ -32,7 +32,7 @@ public class ServletInitConfig extends AbstractAnnotationConfigDispatcherServlet
             e.printStackTrace();
         }
         
-        //super.onStartup(servletContext);
+        super.onStartup(servletContext);
     }
 
     // 配置文件上传参数

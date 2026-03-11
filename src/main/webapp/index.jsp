@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>音频文件上传 - 米帕音频</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/upload.css">
+    <link rel="stylesheet" href="<%= request.getContextPath() %>/css/upload.css">
 </head>
 <body>
 <div class="container">
@@ -53,8 +53,10 @@
 </div>
 
 <script>
-    // 获取项目上下文路径
-    const contextPath = window.location.pathname.substring(0, window.location.pathname.indexOf('/', 2) + 1);
+    // 获取项目上下文路径 - 修复版本
+    const contextPath = window.location.pathname === '/' ? '' : window.location.pathname.substring(0, window.location.pathname.indexOf('/', 2));
+    
+    console.log('计算的 ContextPath:', contextPath);
     
     // 显示选中的文件名
     document.getElementById('file').addEventListener('change', function(e) {
@@ -84,6 +86,10 @@
             return;
         }
         
+        console.log('开始上传...');
+        console.log('请求 URL:', contextPath + '/api/audio/upload');
+        console.log('文件大小:', fileInput.files[0].size, 'bytes');
+        
         // 显示进度条
         progressBar.style.display = 'block';
         progressFill.style.width = '0%';
@@ -97,15 +103,30 @@
                 progressFill.style.width = progress + '%';
             }, 200);
             
-            const response = await fetch(contextPath + 'api/audio/upload', {
+            console.log('发送请求...');
+            const response = await fetch(contextPath + '/api/audio/upload', {
                 method: 'POST',
                 body: formData
             });
             
+            console.log('响应状态:', response.status);
+            console.log('响应头:', response.headers);
+            
             clearInterval(progressInterval);
             progressFill.style.width = '100%';
             
+            // 检查响应是否为 JSON
+            const contentType = response.headers.get('content-type');
+            console.log('响应类型:', contentType);
+            
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                console.error('非 JSON 响应:', text);
+                throw new Error('服务器返回了非 JSON 响应：<br>' + text.substring(0, 200));
+            }
+            
             const result = await response.json();
+            console.log('上传结果:', result);
             
             setTimeout(() => {
                 progressBar.style.display = 'none';
@@ -121,8 +142,10 @@
             }, 500);
             
         } catch (error) {
+            console.error('上传异常:', error);
+            console.error('错误堆栈:', error.stack);
             progressBar.style.display = 'none';
-            showResult('❌ 上传失败：' + error.message, false);
+            showResult('❌ 上传失败：' + error.message + '<br><br>请查看控制台获取详细信息。', false);
         }
     });
     

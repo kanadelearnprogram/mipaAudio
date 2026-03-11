@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @Configuration
-@ComponentScan("com.kanade.mipaaudio")
+@ComponentScan(basePackages = {"com.kanade.mipaaudio.controller", "com.kanade.mipaaudio.service", "com.kanade.mipaaudio.mapper", "com.kanade.mipaaudio.config"})
 @Import({MyBatisFlexConfig.class, WebConfig.class})
 @EnableAspectJAutoProxy(proxyTargetClass = true)
 @EnableTransactionManagement
