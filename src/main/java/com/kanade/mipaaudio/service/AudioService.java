@@ -39,5 +39,12 @@ public interface AudioService extends IService<Audio> {
      * @return 分页结果，包含列表、总数、总页数等信息
      */
     Map<String, Object> getAudioListWithPagination(Integer pageNum, Integer pageSize);
+
+    /**
+     * 下载音频文件
+     * @param id 音频 ID
+     * @return 下载结果，包含文件路径、文件名等信息
+     */
+    Map<String, Object> downloadAudio(Long id);
 }
 

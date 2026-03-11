@@ -4,6 +4,7 @@ package com.kanade.mipaaudio.controller;
 import com.kanade.mipaaudio.entity.Audio;
 import com.kanade.mipaaudio.service.AudioService;
 import com.mybatisflex.core.query.QueryWrapper;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +16,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -99,6 +102,69 @@ public class AudioController {
         }
         
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * 下载音频文件
+     * @param id 音频 ID
+     * @param response HTTP 响应对象
+     */
+    @GetMapping("/download")
+    public void downloadAudio(@RequestParam("id") Long id, jakarta.servlet.http.HttpServletResponse response) {
+        log.info("下载音频文件，ID: {}", id);
+        
+        try {
+            Map<String, Object> result = audioService.downloadAudio(id);
+            
+            if (!Boolean.TRUE.equals((Boolean) result.get("success"))) {
+                log.error("下载失败：{}", result.get("message"));
+                response.sendError(400, result.get("message").toString());
+                return;
+            }
+            
+            String filePath = (String) result.get("filePath");
+            String fileName = (String) result.get("fileName");
+            Long fileSize = (Long) result.get("fileSize");
+            
+            File file = new File(filePath);
+            if (!file.exists()) {
+                log.error("文件不存在：{}", filePath);
+                response.sendError(404, "文件不存在");
+                return;
+            }
+            
+            // 设置响应头
+            response.setContentType("application/octet-stream");
+            response.setHeader("Content-Length", String.valueOf(file.length()));
+            
+            // 处理中文文件名编码问题
+            String encodedFileName = java.net.URLEncoder.encode(fileName, "UTF-8").replaceAll("\\+", "%20");
+            response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + encodedFileName);
+            response.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
+            
+            // 写入文件流到响应输出流
+            try (FileInputStream inputStream = new FileInputStream(file);
+                 OutputStream outputStream = response.getOutputStream()) {
+                
+                byte[] buffer = new byte[4096];
+                int bytesRead;
+                
+                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, bytesRead);
+                }
+                
+                outputStream.flush();
+                log.info("文件下载成功：{}", fileName);
+            }
+            
+        } catch (Exception e) {
+            log.error("下载文件失败", e);
+            try {
+                response.sendError(500, "下载失败：" + e.getMessage());
+            } catch (IOException ex) {
+                log.error("发送错误响应失败", ex);
+            }
+        }
     }
 
     // todo 增查

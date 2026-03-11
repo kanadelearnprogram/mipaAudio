@@ -204,6 +204,29 @@
             font-size: 14px;
             padding: 0 10px;
         }
+
+        .btn-download {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-download:hover {
+            background: linear-gradient(135deg, #218838 0%, #1aa179 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-download:active {
+            transform: translateY(0);
+        }
     </style>
 </head>
 <body>
@@ -228,6 +251,7 @@
                     <th>文件大小</th>
                     <th>下载量</th>
                     <th>上传时间</th>
+                    <th>操作</th>
                 </tr>
             </thead>
             <tbody id="audioTableBody">
@@ -273,6 +297,25 @@
     document.addEventListener('DOMContentLoaded', function() {
         loadAudioList(1);
     });
+    
+    // 下载音频文件
+    function downloadAudio(id) {
+        console.log('下载音频，ID:', id);
+        
+        const downloadUrl = contextPath + '/api/audio/download?id=' + id;
+        console.log('下载 URL:', downloadUrl);
+        
+        // 创建隐藏的 iframe 来触发下载
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = downloadUrl;
+        document.body.appendChild(iframe);
+        
+        // 下载完成后移除 iframe
+        setTimeout(() => {
+            document.body.removeChild(iframe);
+        }, 5000);
+    }
     
     // 加载音频文件列表
     async function loadAudioList(page = 1) {
@@ -389,6 +432,15 @@
             const timeCell = document.createElement('td');
             timeCell.textContent = formatDateTime(audio.uploadTime);
             row.appendChild(timeCell);
+            
+            // 操作列（下载按钮）
+            const actionCell = document.createElement('td');
+            const downloadBtn = document.createElement('button');
+            downloadBtn.className = 'btn-download';
+            downloadBtn.textContent = '📥 下载';
+            downloadBtn.onclick = function() { downloadAudio(audio.id); };
+            actionCell.appendChild(downloadBtn);
+            row.appendChild(actionCell);
             
             tableBody.appendChild(row);
         });

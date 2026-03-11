@@ -193,4 +193,63 @@ public class AudioServiceImpl extends ServiceImpl<AudioMapper, Audio> implements
         
         return result;
     }
+
+    /**
+     * 下载音频文件
+     * @param id 音频 ID
+     * @return 下载结果
+     */
+    @Override
+    public Map<String, Object> downloadAudio(Long id) {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // 1. 根据 ID 查询音频信息
+            Audio audio = getById(id);
+            if (audio == null || audio.getIsDelete() != null && audio.getIsDelete() == 1) {
+                log.warn("音频文件不存在或已被删除，ID: {}", id);
+                result.put("success", false);
+                result.put("message", "音频文件不存在或已被删除");
+                return result;
+            }
+            
+            // 2. 检查文件是否存在
+            File file = new File(audio.getSavePath());
+            if (!file.exists()) {
+                log.error("文件不存在：{}", audio.getSavePath());
+                result.put("success", false);
+                result.put("message", "文件已丢失：" + audio.getAudioName());
+                return result;
+            }
+            
+            // 3. 更新下载次数
+            Integer currentDownloadCount = audio.getDownloadCount();
+            if (currentDownloadCount == null) {
+                currentDownloadCount = 0;
+            }
+            audio.setDownloadCount(currentDownloadCount + 1);
+            boolean updated = updateById(audio);
+            
+            if (!updated) {
+                log.warn("更新下载次数失败，ID: {}", id);
+            } else {
+                log.info("下载次数 +1，当前下载次数：{}", audio.getDownloadCount());
+            }
+            
+            // 4. 返回下载信息
+            result.put("success", true);
+            result.put("message", "准备下载");
+            result.put("data", audio);
+            result.put("filePath", audio.getSavePath());
+            result.put("fileName", audio.getAudioName());
+            result.put("fileSize", audio.getFileSize());
+            
+        } catch (Exception e) {
+            log.error("下载音频失败", e);
+            result.put("success", false);
+            result.put("message", "下载失败：" + e.getMessage());
+        }
+        
+        return result;
+    }
 }
