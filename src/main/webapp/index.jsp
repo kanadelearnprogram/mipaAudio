@@ -3,33 +3,6 @@
 <html lang="zh-CN">
 <head>
     <style>
-        /* 全局样式重置 */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Microsoft YaHei', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        /* 主容器 */
-        .container {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            padding: 40px;
-            max-width: 600px;
-            width: 100%;
-        }
-
         /* 导航栏 */
         .navbar {
             display: flex;
@@ -62,181 +35,50 @@
             box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
         }
 
-        /* 标题 */
-        h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 28px;
+        /* 文件列表样式 */
+        .file-list {
+            margin-top: 15px;
         }
 
-        /* 表单组 */
-        .form-group {
-            margin-bottom: 25px;
-        }
-
-        /* 标签 */
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #555;
-            font-weight: bold;
-        }
-
-        /* 文本输入框和下拉框 */
-        input[type="text"],
-        select {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 5px;
-            font-size: 14px;
-            transition: border-color 0.3s;
-        }
-
-        input[type="text"]:focus,
-        select:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        /* 文件上传区域 */
-        .file-upload-wrapper {
-            position: relative;
-            width: 100%;
-        }
-
-        .file-upload-label {
-            display: block;
-            width: 100%;
-            padding: 40px 20px;
-            background: #f8f9fa;
-            border: 3px dashed #667eea;
-            border-radius: 5px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .file-upload-label:hover {
-            background: #eef2ff;
-            border-color: #764ba2;
-        }
-
-        .file-upload-icon {
-            font-size: 48px;
-            color: #667eea;
-            margin-bottom: 10px;
-        }
-
-        .file-upload-text {
-            color: #666;
-            font-size: 16px;
-        }
-
-        .file-upload-hint {
-            color: #999;
-            font-size: 12px;
-            margin-top: 5px;
-        }
-
-        input[type="file"] {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            opacity: 0;
-            cursor: pointer;
-        }
-
-        /* 文件名显示 */
-        .file-name {
-            margin-top: 10px;
+        .file-item {
+            display: flex;
+            align-items: center;
             padding: 10px;
-            background: #f0f0f0;
+            background: #f8f9fa;
             border-radius: 5px;
-            color: #333;
-            font-size: 14px;
-            display: none;
+            margin-bottom: 8px;
+            border-left: 4px solid #667eea;
         }
 
-        /* 提交按钮 */
-        .btn-submit {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 18px;
+        .file-info {
+            flex: 1;
+        }
+
+        .file-item-name {
             font-weight: bold;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 3px;
         }
 
-        .btn-submit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        .file-item-size {
+            font-size: 12px;
+            color: #666;
         }
 
-        .btn-submit:active {
-            transform: translateY(0);
-        }
-
-        /* 进度条 */
-        .progress-bar {
+        .file-item-progress {
             width: 100%;
-            height: 5px;
+            height: 4px;
             background: #e0e0e0;
-            border-radius: 5px;
+            border-radius: 2px;
+            margin-top: 5px;
             overflow: hidden;
-            margin-top: 10px;
-            display: none;
         }
 
-        .progress-fill {
+        .file-item-progress-fill {
             height: 100%;
             background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
             width: 0%;
             transition: width 0.3s;
         }
-
-        /* 结果消息 */
-        .result-message {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 5px;
-            display: none;
-        }
-
-        .result-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .result-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        /* 响应式设计 */
-        @media (max-width: 640px) {
-            .container {
-                padding: 20px;
-            }
-
-            h1 {
-                font-size: 24px;
-            }
-
-            .file-upload-label {
-                padding: 30px 15px;
-            }
-        }
-
     </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -276,11 +118,12 @@
                 <label for="file" class="file-upload-label">
                     <div class="file-upload-icon">📁</div>
                     <div class="file-upload-text">点击选择文件或拖拽文件到此处</div>
-                    <div class="file-upload-hint">支持 MP3、WAV、FLAC 等格式，最大 100MB</div>
+                    <div class="file-upload-hint">支持 MP3、WAV、FLAC 等格式，最大 100MB，可选择多个文件</div>
                 </label>
-                <input type="file" id="file" name="file" accept="audio/*,.mp3,.wav,.flac,.aac,.ogg,.wma" required>
+                <input type="file" id="file" name="files" accept="audio/*,.mp3,.wav,.flac,.aac,.ogg,.wma" multiple required>
             </div>
             <div class="file-name" id="fileName"></div>
+            <div id="fileList" class="file-list"></div>
         </div>
 
         <button type="submit" class="btn-submit">🚀 开始上传</button>
@@ -298,13 +141,33 @@
     const contextPath = '${pageContext.request.contextPath}';
     console.log('ContextPath:', contextPath);
     
-    // 显示选中的文件名
+    // 显示选中的文件列表
     document.getElementById('file').addEventListener('change', function(e) {
-        const fileName = e.target.files[0] ? e.target.files[0].name : '';
+        const files = e.target.files;
+        const fileList = document.getElementById('fileList');
         const fileNameDiv = document.getElementById('fileName');
-        if (fileName) {
-            fileNameDiv.textContent = '已选择：' + fileName;
+        
+        // 清空文件列表
+        fileList.innerHTML = '';
+        
+        if (files.length > 0) {
+            fileNameDiv.textContent = '已选择 ' + files.length + ' 个文件';
             fileNameDiv.style.display = 'block';
+            
+            // 显示每个文件的信息
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = '<div class="file-info">' +
+                    '<div class="file-item-name">' + file.name + '</div>' +
+                    '<div class="file-item-size">' + formatFileSize(file.size) + '</div>' +
+                    '<div class="file-item-progress">' +
+                        '<div class="file-item-progress-fill" data-index="' + i + '"></div>' +
+                    '</div>' +
+                '</div>';
+                fileList.appendChild(fileItem);
+            }
         } else {
             fileNameDiv.style.display = 'none';
         }
@@ -321,30 +184,42 @@
         
         // 验证文件
         const fileInput = document.getElementById('file');
-        if (!fileInput.files[0]) {
+        if (fileInput.files.length === 0) {
             showResult('请选择要上传的文件！', false);
             return;
         }
         
         console.log('开始上传...');
-        console.log('请求 URL:', contextPath + '/api/audio/upload');
-        console.log('文件大小:', fileInput.files[0].size, 'bytes');
+        console.log('请求 URL:', contextPath + '/api/audio/upload-multiple');
+        console.log('文件数量:', fileInput.files.length);
         
-        // 显示进度条
+        // 显示总进度条
         progressBar.style.display = 'block';
         progressFill.style.width = '0%';
+        
+        // 重置文件进度条
+        const fileProgressFills = document.querySelectorAll('.file-item-progress-fill');
+        fileProgressFills.forEach(fill => fill.style.width = '0%');
         
         try {
             // 模拟上传进度
             let progress = 0;
             const progressInterval = setInterval(() => {
-                progress += Math.random() * 20;
+                progress += Math.random() * 10;
                 if (progress > 90) progress = 90;
                 progressFill.style.width = progress + '%';
+                
+                // 随机更新每个文件的进度
+                fileProgressFills.forEach(fill => {
+                    const currentWidth = parseFloat(fill.style.width) || 0;
+                    if (currentWidth < 90) {
+                        fill.style.width = (currentWidth + Math.random() * 5) + '%';
+                    }
+                });
             }, 200);
             
             console.log('发送请求...');
-            const response = await fetch(contextPath + '/api/audio/upload', {
+            const response = await fetch(contextPath + '/api/audio/upload-multiple', {
                 method: 'POST',
                 body: formData
             });
@@ -372,13 +247,31 @@
                 progressBar.style.display = 'none';
                 
                 if (result.success) {
-                    showResult('✅ ' + result.message + '<br><br>文件名：' + result.data.audioName + '<br>大小：' + formatFileSize(result.data.fileSize) + '<br>分类：' + result.data.category, true);
-                    // 重置表单
-                    document.getElementById('uploadForm').reset();
-                    document.getElementById('fileName').style.display = 'none';
+                    // 显示成功消息
+                    let successMessage = '✅ ' + result.message + '<br><br>';
+                    result.data.forEach(item => {
+                        if (item.status === 'success') {
+                            successMessage += `📄 ${item.fileName} - ${item.message}<br>`;
+                        }
+                    });
+                    showResult(successMessage, true);
                 } else {
-                    showResult('❌ ' + result.message, false);
+                    // 显示部分失败消息
+                    let errorMessage = '❌ ' + result.message + '<br><br>';
+                    result.data.forEach(item => {
+                        if (item.status === 'error') {
+                            errorMessage += `📄 ${item.fileName} - ${item.message}<br>`;
+                        } else {
+                            errorMessage += `✅ ${item.fileName} - ${item.message}<br>`;
+                        }
+                    });
+                    showResult(errorMessage, false);
                 }
+                
+                // 重置表单
+                document.getElementById('uploadForm').reset();
+                document.getElementById('fileName').style.display = 'none';
+                document.getElementById('fileList').innerHTML = '';
             }, 500);
             
         } catch (error) {
@@ -396,7 +289,7 @@
         resultMessage.className = 'result-message ' + (isSuccess ? 'result-success' : 'result-error');
         resultMessage.style.display = 'block';
         
-        // 3 秒后自动隐藏（成功时）
+        // 5 秒后自动隐藏（成功时）
         if (isSuccess) {
             setTimeout(() => {
                 resultMessage.style.display = 'none';

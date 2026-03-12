@@ -61,5 +61,14 @@ public interface AudioService extends IService<Audio> {
      * @return 分类列表
      */
     Map<String, Object> getAllCategories();
+
+    /**
+     * 多文件上传音频文件
+     * @param files 上传的文件数组
+     * @param uploadUser 上传人
+     * @param category 分类
+     * @return 上传结果列表
+     */
+    Map<String, Object> uploadMultipleAudio(MultipartFile[] files, String uploadUser, String category);
 }
 

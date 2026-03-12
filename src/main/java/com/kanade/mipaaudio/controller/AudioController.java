@@ -282,6 +282,26 @@ public class AudioController {
     }
 
     /**
+     * 多文件上传接口
+     * @param files 上传的文件数组
+     * @param uploadUser 上传人
+     * @param category 分类
+     * @return 上传结果
+     */
+    @PostMapping("/upload-multiple")
+    public ResponseEntity<Map<String, Object>> uploadMultipleFiles(
+            @RequestParam("files") MultipartFile[] files,
+            @RequestParam(value = "uploadUser", defaultValue = "anonymous") String uploadUser,
+            @RequestParam(value = "category", defaultValue = "未分类") String category) {
+
+        log.info("Controller 接收到多文件上传请求，上传人：{}，文件数量：{}", uploadUser, files.length);
+        Map<String, Object> result = audioService.uploadMultipleAudio(files, uploadUser, category);
+
+        int status = Boolean.TRUE.equals((Boolean) result.get("success")) ? 200 : 500;
+        return ResponseEntity.status(status).body(result);
+    }
+
+    /**
      * 根据文件扩展名获取音频 MIME 类型
      * @param fileName 文件名
      * @return MIME 类型
